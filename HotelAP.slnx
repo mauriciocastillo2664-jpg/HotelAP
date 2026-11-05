@@ -1,0 +1,15 @@
+<Solution>
+  <Project Path="Hotal.AccesoDatos/Hotal.AccesoDatos.csproj" />
+  <Project Path="Hotel.API/Hotel.API.csproj" />
+  <Project Path="Hotel.Dominio/Hotel.Dominio.csproj" />
+  <Project Path="Hotel.LogicaNegocio/Hotel.LogicaNegocio.csproj" />
+  <Project Path="Hotel.Utilitarios/Hotel.Utilitarios.csproj" />
+  <Project Path="Hotel.Web/Hotel.Web.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="Hotel.Mobil/Hotel.Mobil.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+</Solution>
