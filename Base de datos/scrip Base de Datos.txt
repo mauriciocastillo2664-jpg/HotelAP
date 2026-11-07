@@ -1,0 +1,250 @@
+scrip base de datos del proyecto Hotel
+
+CREATE DATABASE HotelBD;
+GO
+USE DATABASE HotelBD;
+GO
+
+-- CLIENTES 
+CREATE TABLE Clientes (
+    Id               INT IDENTITY(1,1) PRIMARY KEY,
+    TipoDocumento    VARCHAR(20)   NOT NULL CHECK (TipoDocumento IN ('DNI', 'Pasaporte', 'Cedula')),
+    NumeroDocumento  VARCHAR(30)   NOT NULL,
+    Nombres          NVARCHAR(100) NOT NULL,
+    Apellidos        NVARCHAR(100) NOT NULL,
+    Nacionalidad     NVARCHAR(50)  NOT NULL,
+    Email            NVARCHAR(150) NOT NULL UNIQUE CHECK (Email LIKE '%_@_%._%'),
+    Telefono         VARCHAR(20)   NOT NULL,
+    FechaNacimiento  DATE          NOT NULL,
+    Preferencias     NVARCHAR(500) NULL,
+    Descuento        DECIMAL(5,2)  NOT NULL DEFAULT 0 CHECK (Descuento BETWEEN 0 AND 100),
+    Activo           BIT           NOT NULL DEFAULT 1,
+    FechaRegistro    DATETIME      NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT UQ_Clientes_Documento UNIQUE (TipoDocumento, NumeroDocumento)
+);
+GO
+
+--SEGURIDAD 
+CREATE TABLE Usuarios (
+    Id             INT IDENTITY(1,1) PRIMARY KEY,
+    NombreUsuario  NVARCHAR(50)  NOT NULL UNIQUE,
+    Email          NVARCHAR(150) NOT NULL UNIQUE,
+    PasswordHash   VARCHAR(256)  NOT NULL,
+    Nombres        NVARCHAR(100) NOT NULL,
+    Apellidos      NVARCHAR(100) NOT NULL,
+    ClienteId      INT           NULL FOREIGN KEY REFERENCES Clientes(Id),
+    Activo         BIT           NOT NULL DEFAULT 1,
+    FechaCreacion  DATETIME      NOT NULL DEFAULT GETDATE()
+);
+GO
+
+CREATE TABLE Roles (
+    Id      INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre  NVARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+CREATE TABLE Permisos (
+    Id      INT IDENTITY(1,1) PRIMARY KEY,
+    Codigo  VARCHAR(60) NOT NULL UNIQUE      -- ej. Reservaciones.Confirmar
+);
+GO
+
+CREATE TABLE UsuarioRoles (
+    UsuarioId  INT NOT NULL FOREIGN KEY REFERENCES Usuarios(Id),
+    RolId      INT NOT NULL FOREIGN KEY REFERENCES Roles(Id),
+    PRIMARY KEY (UsuarioId, RolId)
+);
+GO
+
+CREATE TABLE RolPermisos (
+    RolId      INT NOT NULL FOREIGN KEY REFERENCES Roles(Id),
+    PermisoId  INT NOT NULL FOREIGN KEY REFERENCES Permisos(Id),
+    PRIMARY KEY (RolId, PermisoId)
+);
+GO
+
+CREATE TABLE RefreshTokens (
+    Id                INT IDENTITY(1,1) PRIMARY KEY,
+    UsuarioId         INT          NOT NULL FOREIGN KEY REFERENCES Usuarios(Id),
+    TokenHash         VARCHAR(128) NOT NULL UNIQUE,
+    FechaCreacion     DATETIME     NOT NULL DEFAULT GETDATE(),
+    FechaExpiracion   DATETIME     NOT NULL,
+    FechaRevocacion   DATETIME     NULL,
+    TokenReemplazoId  INT          NULL FOREIGN KEY REFERENCES RefreshTokens(Id),
+    CHECK (FechaExpiracion > FechaCreacion)
+);
+GO
+
+-- HABITACIONES 
+CREATE TABLE TiposHabitacion (
+    Id                  INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre              NVARCHAR(60)  NOT NULL UNIQUE,   -- Simple, Doble Estándar, Suite...
+    Descripcion         NVARCHAR(500) NULL,
+    CapacidadAdultos    INT           NOT NULL CHECK (CapacidadAdultos >= 1),
+    CapacidadNinos      INT           NOT NULL CHECK (CapacidadNinos >= 0),
+    PrecioBasePorNoche  DECIMAL(12,2) NOT NULL CHECK (PrecioBasePorNoche > 0),
+    Activo              BIT           NOT NULL DEFAULT 1
+);
+GO
+
+CREATE TABLE Amenidades (
+    Id      INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre  NVARCHAR(60) NOT NULL UNIQUE      -- Jacuzzi, Vista al mar, Balcón...
+);
+GO
+
+CREATE TABLE Habitaciones (
+    Id                INT IDENTITY(1,1) PRIMARY KEY,
+    Numero            VARCHAR(10)   NOT NULL UNIQUE,
+    Piso              INT           NOT NULL CHECK (Piso >= 0),
+    TipoHabitacionId  INT           NOT NULL FOREIGN KEY REFERENCES TiposHabitacion(Id),
+    EstadoOperativo   VARCHAR(20)   NOT NULL DEFAULT 'Disponible'
+        CHECK (EstadoOperativo IN ('Disponible', 'Reservada', 'Ocupada', 'EnLimpieza', 'EnMantenimiento', 'Bloqueada')),
+    FotoUrl           NVARCHAR(400) NULL,
+    Activo            BIT           NOT NULL DEFAULT 1,
+    RowVersion        ROWVERSION
+);
+GO
+
+CREATE TABLE HabitacionAmenidades (
+    HabitacionId  INT NOT NULL FOREIGN KEY REFERENCES Habitaciones(Id),
+    AmenidadId    INT NOT NULL FOREIGN KEY REFERENCES Amenidades(Id),
+    PRIMARY KEY (HabitacionId, AmenidadId)
+);
+GO
+
+-- RESERVACIONES 
+CREATE TABLE Reservaciones (
+    Id                 INT IDENTITY(1,1) PRIMARY KEY,
+    Codigo             VARCHAR(20)   NOT NULL UNIQUE,     -- HOT2026-11-08921
+    ClienteId          INT           NOT NULL FOREIGN KEY REFERENCES Clientes(Id),
+    FechaInicio        DATE          NOT NULL,
+    FechaFin           DATE          NOT NULL,
+    CantidadAdultos    INT           NOT NULL CHECK (CantidadAdultos >= 1),
+    CantidadNinos      INT           NOT NULL DEFAULT 0 CHECK (CantidadNinos >= 0),
+    Estado             VARCHAR(20)   NOT NULL DEFAULT 'PendientePago'
+        CHECK (Estado IN ('PendientePago', 'Confirmada', 'EnCurso', 'Completada', 'Cancelada')),
+    CostoTotal         DECIMAL(12,2) NOT NULL CHECK (CostoTotal >= 0),
+    AnticipoRequerido  DECIMAL(12,2) NOT NULL CHECK (AnticipoRequerido >= 0),
+    Observaciones      NVARCHAR(500) NULL,
+    MotivoCancelacion  NVARCHAR(300) NULL,
+    FechaCreacion      DATETIME      NOT NULL DEFAULT GETDATE(),
+    RowVersion         ROWVERSION,
+    CHECK (FechaInicio < FechaFin),
+    CHECK (AnticipoRequerido <= CostoTotal),
+    CHECK (Estado <> 'Cancelada' OR MotivoCancelacion IS NOT NULL)
+);
+GO
+
+CREATE TABLE ReservacionHabitaciones (
+    Id             INT IDENTITY(1,1) PRIMARY KEY,
+    ReservacionId  INT           NOT NULL FOREIGN KEY REFERENCES Reservaciones(Id),
+    HabitacionId   INT           NOT NULL FOREIGN KEY REFERENCES Habitaciones(Id),
+    TarifaAplicada DECIMAL(12,2) NOT NULL CHECK (TarifaAplicada > 0),
+    CONSTRAINT UQ_ReservacionHabitacion UNIQUE (ReservacionId, HabitacionId)
+);
+GO
+
+CREATE TABLE HuespedesReservacion (
+    Id               INT IDENTITY(1,1) PRIMARY KEY,
+    ReservacionId    INT           NOT NULL FOREIGN KEY REFERENCES Reservaciones(Id),
+    Nombres          NVARCHAR(100) NOT NULL,
+    Apellidos        NVARCHAR(100) NOT NULL,
+    NumeroDocumento  VARCHAR(30)   NULL,
+    EsMenor          BIT           NOT NULL DEFAULT 0
+);
+GO
+
+-- ESTADÍAS 
+CREATE TABLE Estadias (
+    Id                 INT IDENTITY(1,1) PRIMARY KEY,
+    ReservacionId      INT      NOT NULL UNIQUE FOREIGN KEY REFERENCES Reservaciones(Id),
+    CheckInReal        DATETIME NOT NULL,
+    CheckOutReal       DATETIME NULL,
+    UsuarioCheckInId   INT      NOT NULL FOREIGN KEY REFERENCES Usuarios(Id),
+    UsuarioCheckOutId  INT      NULL FOREIGN KEY REFERENCES Usuarios(Id),
+    CHECK (CheckOutReal IS NULL OR CheckOutReal > CheckInReal)
+);
+GO
+
+-- PAGOS Y FACTURAS 
+CREATE TABLE Pagos (
+    Id             INT IDENTITY(1,1) PRIMARY KEY,
+    ReservacionId  INT           NOT NULL FOREIGN KEY REFERENCES Reservaciones(Id),
+    Monto          DECIMAL(12,2) NOT NULL CHECK (Monto > 0),
+    MetodoPago     VARCHAR(20)   NOT NULL CHECK (MetodoPago IN ('Efectivo', 'Tarjeta', 'Transferencia')),
+    Referencia     NVARCHAR(100) NULL,
+    FechaPago      DATETIME      NOT NULL DEFAULT GETDATE(),
+    Estado         VARCHAR(20)   NOT NULL DEFAULT 'Confirmado' CHECK (Estado IN ('Confirmado', 'Reversado'))
+);
+GO
+
+CREATE TABLE Facturas (
+    Id             INT IDENTITY(1,1) PRIMARY KEY,
+    NumeroFactura  VARCHAR(20)   NOT NULL UNIQUE,
+    ReservacionId  INT           NOT NULL FOREIGN KEY REFERENCES Reservaciones(Id),
+    FechaEmision   DATETIME      NOT NULL DEFAULT GETDATE(),
+    Subtotal       DECIMAL(12,2) NOT NULL CHECK (Subtotal >= 0),
+    Impuesto       DECIMAL(12,2) NOT NULL CHECK (Impuesto >= 0),
+    Total          DECIMAL(12,2) NOT NULL CHECK (Total >= 0)
+);
+GO
+
+-- RESTAURANTE 
+CREATE TABLE CategoriasPlatillo (
+    Id      INT IDENTITY(1,1) PRIMARY KEY,
+    Nombre  NVARCHAR(60) NOT NULL UNIQUE,
+    Activo  BIT          NOT NULL DEFAULT 1
+);
+GO
+
+CREATE TABLE Platillos (
+    Id                    INT IDENTITY(1,1) PRIMARY KEY,
+    CategoriaId           INT           NOT NULL FOREIGN KEY REFERENCES CategoriasPlatillo(Id),
+    Nombre                NVARCHAR(100) NOT NULL UNIQUE,
+    Descripcion           NVARCHAR(500) NULL,
+    Precio                DECIMAL(12,2) NOT NULL CHECK (Precio > 0),
+    ImagenUrl             NVARCHAR(400) NULL,
+    TiempoPreparacionMin  INT           NOT NULL DEFAULT 15 CHECK (TiempoPreparacionMin >= 0),
+    Disponible            BIT           NOT NULL DEFAULT 1,
+    Activo                BIT           NOT NULL DEFAULT 1
+);
+GO
+
+CREATE TABLE PedidosRestaurante (
+    Id                       INT IDENTITY(1,1) PRIMARY KEY,
+    ClienteId                INT           NOT NULL FOREIGN KEY REFERENCES Clientes(Id),
+    ReservacionId            INT           NULL FOREIGN KEY REFERENCES Reservaciones(Id),
+    Modalidad                VARCHAR(20)   NOT NULL CHECK (Modalidad IN ('RoomService', 'Mesa', 'Piscina')),
+    FechaPedido              DATETIME      NOT NULL DEFAULT GETDATE(),
+    EstadoPedido             VARCHAR(20)   NOT NULL DEFAULT 'Pendiente'
+        CHECK (EstadoPedido IN ('Pendiente', 'Confirmado', 'EnPreparacion', 'Listo', 'EnCamino', 'Entregado', 'Cancelado')),
+    InstruccionesEspeciales  NVARCHAR(500) NULL,
+    Total                    DECIMAL(12,2) NOT NULL CHECK (Total >= 0),
+    RowVersion               ROWVERSION,
+    CHECK (Modalidad <> 'RoomService' OR ReservacionId IS NOT NULL)
+);
+GO
+
+CREATE TABLE DetallePedidos (
+    Id              INT IDENTITY(1,1) PRIMARY KEY,
+    PedidoId        INT           NOT NULL FOREIGN KEY REFERENCES PedidosRestaurante(Id),
+    PlatilloId      INT           NOT NULL FOREIGN KEY REFERENCES Platillos(Id),
+    Cantidad        INT           NOT NULL CHECK (Cantidad > 0),
+    PrecioUnitario  DECIMAL(12,2) NOT NULL CHECK (PrecioUnitario >= 0),
+    Subtotal        DECIMAL(12,2) NOT NULL CHECK (Subtotal >= 0)
+);
+GO
+
+-- AUDITORÍA 
+CREATE TABLE Auditoria (
+    Id         INT IDENTITY(1,1) PRIMARY KEY,
+    UsuarioId  INT           NULL FOREIGN KEY REFERENCES Usuarios(Id),
+    Accion     VARCHAR(50)   NOT NULL,
+    Entidad    VARCHAR(50)   NOT NULL,
+    EntidadId  VARCHAR(50)   NULL,
+    FechaUtc   DATETIME      NOT NULL DEFAULT GETUTCDATE(),
+    Datos      NVARCHAR(MAX) NULL
+);
+GO
