@@ -1,6 +1,16 @@
+using Hotel.AccesoDatos.Contexto;
+using Microsoft.EntityFrameworkCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddDbContext<HotelContext>(options =>
+{
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+        ?? throw new InvalidOperationException("Falta configurar ConnectionStrings:DefaultConnection.");
+
+    options.UseSqlServer(connectionString);
+});
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi

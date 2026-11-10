@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Hotal.AccesoDatos\Hotal.AccesoDatos.csproj" />
+  </ItemGroup>
+
 </Project>
