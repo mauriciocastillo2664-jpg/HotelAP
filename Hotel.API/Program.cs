@@ -94,6 +94,38 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAuthenticatedUser();
         policy.RequireClaim("permission", "Menu.Editar");
     });
+
+	options.AddPolicy("Clientes.Leer", policy =>
+	{
+		policy.RequireAuthenticatedUser();
+		policy.RequireClaim("permission", "Clientes.Leer");
+	});
+
+	options.AddPolicy("Clientes.Editar", policy =>
+	{
+		policy.RequireAuthenticatedUser();
+		policy.RequireClaim("permission", "Clientes.Editar");
+	});
+
+
+	options.AddPolicy("Habitaciones.CambiarEstado", policy =>
+	{
+		policy.RequireAuthenticatedUser();
+		policy.RequireClaim("permission", "Habitaciones.CambiarEstado");
+	});
+
+	options.AddPolicy("Parametros.Editar", policy =>
+	{
+		policy.RequireAuthenticatedUser();
+		policy.RequireClaim("permission", "Parametros.Editar");
+	});
+
+	options.AddPolicy("Usuarios.Gestionar", policy =>
+	{
+		policy.RequireAuthenticatedUser();
+		policy.RequireClaim("permission", "Usuarios.Gestionar");
+	});
+
 });
 
 builder.Services.AddControllers();
