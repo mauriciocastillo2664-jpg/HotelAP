@@ -17,6 +17,8 @@ public partial class Estadia
 
     public int? UsuarioCheckOutId { get; set; }
 
+    public string? CodigoAcceso { get; set; }
+
     public virtual Reservacion Reservacion { get; set; } = null!;
 
     public virtual Usuario UsuarioCheckIn { get; set; } = null!;

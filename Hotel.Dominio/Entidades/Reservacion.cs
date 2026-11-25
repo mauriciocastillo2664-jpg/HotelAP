@@ -19,9 +19,17 @@ public partial class Reservacion
 
     public int CantidadNinos { get; set; }
 
-    public string Estado { get; set; } = null!;
+    public int EstadoReservacionId { get; set; }
 
-    public decimal CostoTotal { get; set; }
+    public int? DescuentoId { get; set; }
+
+    public decimal Subtotal { get; set; }
+
+    public decimal Descuento { get; set; }
+
+    public decimal Impuestos { get; set; }
+
+    public decimal Total { get; set; }
 
     public decimal AnticipoRequerido { get; set; }
 
@@ -29,21 +37,37 @@ public partial class Reservacion
 
     public string? MotivoCancelacion { get; set; }
 
+    public int? UsuarioCreacionId { get; set; }
+
     public DateTime FechaCreacion { get; set; }
 
     public byte[] RowVersion { get; set; } = null!;
 
+    public virtual ICollection<AjusteCuenta> AjustesCuenta { get; set; } = new List<AjusteCuenta>();
+
+    public virtual ICollection<CargoAdicional> CargosAdicionales { get; set; } = new List<CargoAdicional>();
+
     public virtual Cliente Cliente { get; set; } = null!;
+
+    public virtual ICollection<Correo> Correos { get; set; } = new List<Correo>();
+
+    public virtual Descuento? DescuentoNavigation { get; set; }
 
     public virtual Estadia? Estadia { get; set; }
 
-    public virtual ICollection<Factura> Facturas { get; set; } = new List<Factura>();
+    public virtual EstadoReservacion EstadoReservacion { get; set; } = null!;
 
-    public virtual ICollection<HuespedReservacion> HuespedesReservacions { get; set; } = new List<HuespedReservacion>();
+    public virtual Factura? Factura { get; set; }
 
-    public virtual ICollection<Pago> Pagos { get; set; } = new List<Pago>();
+    public virtual ICollection<HistorialReservacion> HistorialReservaciones { get; set; } = new List<HistorialReservacion>();
 
-    public virtual ICollection<PedidoRestaurante> PedidosRestaurantes { get; set; } = new List<PedidoRestaurante>();
+    public virtual ICollection<HuespedReservacion> HuespedesReservacion { get; set; } = new List<HuespedReservacion>();
+
+    public virtual Pago? Pago { get; set; }
+
+    public virtual ICollection<PedidoRestaurante> PedidosRestaurante { get; set; } = new List<PedidoRestaurante>();
 
     public virtual ICollection<ReservacionHabitacion> ReservacionHabitaciones { get; set; } = new List<ReservacionHabitacion>();
+
+    public virtual Usuario? UsuarioCreacion { get; set; }
 }

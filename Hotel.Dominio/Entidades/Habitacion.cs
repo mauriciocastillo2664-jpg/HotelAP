@@ -13,13 +13,19 @@ public partial class Habitacion
 
     public int TipoHabitacionId { get; set; }
 
-    public string EstadoOperativo { get; set; } = null!;
-
-    public string? FotoUrl { get; set; }
+    public int EstadoHabitacionId { get; set; }
 
     public bool Activo { get; set; }
 
     public byte[] RowVersion { get; set; } = null!;
+
+    public virtual EstadoHabitacion EstadoHabitacion { get; set; } = null!;
+
+    public virtual ICollection<HabitacionFoto> HabitacionFotos { get; set; } = new List<HabitacionFoto>();
+
+    public virtual ICollection<HistorialEstadoHabitacion> HistorialEstadosHabitacion { get; set; } = new List<HistorialEstadoHabitacion>();
+
+    public virtual ICollection<PedidoRestaurante> PedidosRestaurante { get; set; } = new List<PedidoRestaurante>();
 
     public virtual ICollection<ReservacionHabitacion> ReservacionHabitaciones { get; set; } = new List<ReservacionHabitacion>();
 

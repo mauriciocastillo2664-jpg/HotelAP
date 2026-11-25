@@ -9,13 +9,17 @@ public partial class HuespedReservacion
 
     public int ReservacionId { get; set; }
 
-    public string Nombres { get; set; } = null!;
+    public string NombreCompleto { get; set; } = null!;
 
-    public string Apellidos { get; set; } = null!;
+    public int? TipoIdentificacionId { get; set; }
 
-    public string? NumeroDocumento { get; set; }
+    public string? NumeroIdentificacion { get; set; }
 
     public bool EsMenor { get; set; }
 
+    public bool EsTitular { get; set; }
+
     public virtual Reservacion Reservacion { get; set; } = null!;
+
+    public virtual TipoIdentificacion? TipoIdentificacion { get; set; }
 }

@@ -11,7 +11,11 @@ public partial class ReservacionHabitacion
 
     public int HabitacionId { get; set; }
 
-    public decimal TarifaAplicada { get; set; }
+    public DateOnly FechaInicio { get; set; }
+
+    public DateOnly FechaFin { get; set; }
+
+    public decimal Subtotal { get; set; }
 
     public virtual Habitacion Habitacion { get; set; } = null!;
 

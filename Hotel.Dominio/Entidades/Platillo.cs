@@ -17,7 +17,9 @@ public partial class Platillo
 
     public string? ImagenUrl { get; set; }
 
-    public int TiempoPreparacionMin { get; set; }
+    public int TiempoPreparacion { get; set; }
+
+    public bool EsBebida { get; set; }
 
     public bool Disponible { get; set; }
 

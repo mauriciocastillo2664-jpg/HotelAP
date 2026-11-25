@@ -17,6 +17,10 @@ public partial class TipoHabitacion
 
     public decimal PrecioBasePorNoche { get; set; }
 
+    public int PersonasIncluidas { get; set; }
+
+    public decimal CargoPersonaAdicional { get; set; }
+
     public bool Activo { get; set; }
 
     public virtual ICollection<Habitacion> Habitaciones { get; set; } = new List<Habitacion>();

@@ -15,7 +15,7 @@ public partial class DetallePedido
 
     public decimal PrecioUnitario { get; set; }
 
-    public decimal Subtotal { get; set; }
+    public decimal? Subtotal { get; set; }
 
     public virtual PedidoRestaurante Pedido { get; set; } = null!;
 

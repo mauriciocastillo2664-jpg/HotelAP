@@ -13,11 +13,15 @@ public partial class Auditoria
 
     public string Entidad { get; set; } = null!;
 
-    public string? EntidadId { get; set; }
-
-    public DateTime FechaUtc { get; set; }
+    public int? EntidadId { get; set; }
 
     public string? Datos { get; set; }
+
+    public string Resultado { get; set; } = null!;
+
+    public string? DireccionIp { get; set; }
+
+    public DateTime FechaUtc { get; set; }
 
     public virtual Usuario? Usuario { get; set; }
 }
